@@ -296,7 +296,7 @@ struct teamachine {
 		return entry;
 	};
 
-	struct fixup *syscom(const byte *name, byte len)
+	struct fixup *natcom(const byte *name, byte len)
 	{
 		native *fn = resolve(name, len);
 		struct fixup *fixup = (struct fixup *)here;
@@ -377,8 +377,8 @@ struct teacom
 	teamachine::dictstar colon(const char *name, teacode *body = 0, unsigned bytes = 0, byte flags = basekind)
 	{ return colon((const byte *)name, strlen(name), body, bytes, flags); }
 
-	struct teamachine::fixup *syscom(const char *name)
-	{ return vm.syscom((const byte *)name, strlen(name)); };
+	struct teamachine::fixup *natcom(const char *name)
+	{ return vm.natcom((const byte *)name, strlen(name)); };
 
 	void start_()
 	{
@@ -726,8 +726,8 @@ int teacom::bootstrap()
 		finish_();
 	}
 
-	struct teamachine::fixup *fixfoo = syscom("foo");
-	struct teamachine::fixup *fixbar = syscom("bar");
+	struct teamachine::fixup *fixfoo = natcom("foo");
+	struct teamachine::fixup *fixbar = natcom("bar");
 
 	if (0) {
 		colon("test");
@@ -1303,7 +1303,7 @@ until_: tea.until_();
 
 native_: { // ( cstring -> )
 	byte *name = outside(*stack++);
-	syscom(name + 1, name[0]); }
+	natcom(name + 1, name[0]); }
 	goto **next++;
 
 	/* db */
