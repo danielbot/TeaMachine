@@ -1,0 +1,19 @@
+Currently, teamachine only knows how to do two things:
+
+ 1) run interpreter cycle benchmarks:
+
+        ./shardmap <nopcount> <iterations>
+
+    Where nopcount is the number of nops to execute inside a simple iterative
+    loop, from zero to nine. For example:
+
+        time ./shardmap 9 10000000000
+
+   will do ten billion iterations of executing 9 interpreter nops, plus the
+   loop overhead. The time in seconds will therefore be approximately the
+   number of nanoseconds per iterpreter cycle. (Nine nops plus the loop
+   iteration is a total of ten interpreter cycles.)
+
+
+ 2) if number of command line arguments is zero, then run a simplified
+    read-eval-print loop. Type bye to exit. More details to follow on this.
