@@ -34,16 +34,10 @@ typedef unsigned char byte;
 typedef long teacode;
 typedef	long (native)(long, long *);
 
-static byte *align(void *p, unsigned bits)
+template<typename Type>static byte *align(Type p, unsigned bits)
 {
 	unsigned mask = (1 << bits) - 1; // should compile to constant
-	return (byte *)p + (-(long)p & mask);
-}
-
-static long align(long n, unsigned bits)
-{
-	unsigned mask = (1 << bits) - 1; // should compile to constant
-	return n + (-(long)n & mask);
+	return (Type)p + (-(long)p & mask);
 }
 
 extern "C" void error_exit(unsigned exitcode, const char *reason, ...)
