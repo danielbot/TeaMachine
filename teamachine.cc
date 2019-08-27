@@ -55,7 +55,6 @@ extern "C" void error_exit(unsigned exitcode, const char *reason, ...)
 	fprintf(stderr, "!\n");
 	if (DEBUG)
 		BREAK;
-
 	exit(exitcode);
 }
 
@@ -131,7 +130,7 @@ static struct teacodes { teacode
 #include "shardmap/shardmap.h"
 
 struct teamachine {
-	typedef long dictstar; // dict relative symbol list link
+	typedef long dictstar; // dict relative pointer
 
 	struct entry {
 		dictstar link; byte flags, len, name[0];
@@ -209,7 +208,7 @@ struct teamachine {
 		return relative + dict;
 	}
 
-	long *abscode(const long relative)
+	long *thread(const long relative)
 	{
 		return (long *)outside(relative);
 	}
@@ -1146,7 +1145,7 @@ i: *--stack = rstack[0];
 
 call:
 	*--rstack = (long)(next + 1);
-	next = abscode(*next);
+	next = thread(*next);
 	goto **next++;
 
 execute: {
@@ -1154,7 +1153,7 @@ execute: {
 	if (what < 0)
 		goto *(what & ~highbit);
 	*--rstack = (long)next;
-	next = abscode(what); }
+	next = thread(what); }
 	goto **next++;
 
 native: {
@@ -1457,7 +1456,7 @@ int main(int argc, const char *argv[])
 			tea.op(_.six), tea.op(_.remove4), tea.arg(0), tea.arg(0);
 			tea.op(_.six), tea.op(_.lookup4), tea.arg(0), tea.arg(0);
 			tea.op(_.bye);
-			return vm.run(vm.abscode(test));
+			return vm.run(vm.thread(test));
 		}
 	}
 
@@ -1531,7 +1530,7 @@ int main(int argc, const char *argv[])
 			vm.do_fixups(); // necessary only at load/link time
 
 		/* install shell as word zero so abort goes here */
-		vm.body[0] = vm.abscode(teashell);
+		vm.body[0] = vm.thread(teashell);
 		long boot[] = {_.run, /* shell should never exit, but... */ _.bye};
 		int excode = 255; // goes back to shell!
 
