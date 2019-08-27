@@ -1481,11 +1481,11 @@ int main(int argc, const char *argv[])
 		 *       0< running or unless
 		 *         dup highbit and unless compile ;word then ,
 		 *       else
-		 *	       execute
+		 *         execute
 		 *       then
 		 *     else
 		 *       count literal if
-		 *	       running unless compile ;n , then
+		 *         running unless compile ;n , then
 		 *       else
 		 *         huh abort
 		 *       then
