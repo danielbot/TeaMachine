@@ -167,11 +167,6 @@ struct teamachine {
 		dict(dict), wall(dict + size), here(dict), mode(1)
 	{
 		assert(!(highbit & _.query));
-		tealib = dlopen(NULL, RTLD_NOW); // _LAZY also works
-		if (!tealib) {
-			printf("%s!\n", dlerror());
-			exit(1);
-		}
 
 		if (0) {
 			native *fn = (native *)dlsym(tealib, "foo");
@@ -1338,6 +1333,12 @@ run: *--rstack = (long)next; next = body[0];
 
 int main(int argc, const char *argv[])
 {
+	tealib = dlopen(NULL, RTLD_NOW); // _LAZY also works
+	if (!tealib) {
+		printf("%s!\n", dlerror());
+		exit(1);
+	}
+
 	enum {dictsize = 10000};
 
 	teamachine vm((byte *)malloc(dictsize), dictsize);
