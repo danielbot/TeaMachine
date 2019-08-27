@@ -94,13 +94,13 @@ int tpcb_run(int fds[5], unsigned scalefactor, unsigned iterations)
 	for (unsigned n = 0; n < scalefactor; n++, bid++) {
 		struct branch data = { bid };
 		memset(data.pad, filler, sizeof data.pad);
-		branches.insert((u8 *)&bid, 4, &data);
+		branches.insert(&bid, 4, &data);
 		branch_id.push_back(bid);
 
 		for (int i = 0; i < t_per_b; i++) {
 			struct teller data = { tid, bid };
 			memset(data.pad, filler, sizeof data.pad);
-			tellers.insert((u8 *)&tid, 4, &data);
+			tellers.insert(&tid, 4, &data);
 			teller_branch.push_back(n);
 			teller_id.push_back(tid);
 			tid++;
@@ -111,7 +111,7 @@ int tpcb_run(int fds[5], unsigned scalefactor, unsigned iterations)
 		for (int i = 0; i < a_per_b; i++) {
 			struct account data = { aid, bid };
 			memset(data.pad, filler, sizeof data.pad);
-			accounts.insert((u8 *)&aid, 4, &data);
+			accounts.insert(&aid, 4, &data);
 			accounts_at_branch.push_back(aid);
 			aid++;
 		}
@@ -138,11 +138,11 @@ int tpcb_run(int fds[5], unsigned scalefactor, unsigned iterations)
 		/* Acquire transaction resources (one record from each of three tables) */
 		rec_t *rec;
 		struct query { struct account *a; struct branch *b; struct teller *t; } query = {};
-		if ((rec = accounts.lookup((u8 *)&aid, 4)))
+		if ((rec = accounts.lookup(&aid, 4)))
 			query.a = (struct account *)rec;
-		if ((rec = branches.lookup((u8 *)&bid, 4)))
+		if ((rec = branches.lookup(&bid, 4)))
 			query.b = (struct branch *)rec;
-		if ((rec = tellers.lookup((u8 *)&tid, 4)))
+		if ((rec = tellers.lookup(&tid, 4)))
 			query.t = (struct teller *)rec;
 		if ((!query.a|!query.b|!query.t))
 			error_exit(1, "*** abort hid %u: aid %u bid %u tid %u (%i-%i-%i)",
@@ -168,7 +168,7 @@ int tpcb_run(int fds[5], unsigned scalefactor, unsigned iterations)
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 		struct transaction transaction = { aid, tid, bid, query.a->balance, tv };
-		history.insert((u8 *)&hid, 4, &transaction );
+		history.insert(&hid, 4, &transaction);
 	}
 
 	return 0;
