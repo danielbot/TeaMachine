@@ -692,39 +692,6 @@ int teacom::bootstrap()
 	op(_.out);
 	finish_();
 
-	if (0) {
-		start_();
-
-		if (0) {
-			if_();
-			op(_.six);
-			if (1) {
-				else_();
-				op(_.seven);
-			}
-			end_();
-		}
-
-		if (0) {
-			op(_.three);
-			begin_();
-			if (1) {
-				op(_.dup);
-				while_();
-			}
-			op(_.dec);
-			loop_();
-		}
-
-		if (1) {
-			do_(0);
-			op(_.nop);
-			loop_();
-		}
-
-		finish_();
-	}
-
 	struct teamachine::fixup *fixfoo = natcom("foo");
 	struct teamachine::fixup *fixbar = natcom("bar");
 
