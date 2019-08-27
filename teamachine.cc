@@ -312,24 +312,24 @@ struct teamachine {
 	void grow(unsigned bytes) { here = align(here + bytes, dictalign); }
 };
 
-struct control
-{
-	u32 what, nest;
-	s32 source, target; // relative to body start
-	control(unsigned what, int source = 0, int target = 0) : what(what), nest(0), source(source), target(target) {}
-	control(){}
-
-	void push(long *&stack) { *--*(control **)&stack = *this; }
-	struct control pop(long *&stack) { return *(*(control **)&stack)++; }
-	static void error() { throw std::string("Syntax"); }
-};
-
 struct teacom
 {
 	enum {immedflag = 0x80, embedflag = 0x40};
 	enum {basekind = 1}; // kind zero illegal for now
 	enum {immed = immedflag | basekind, kindmask = 0xf}; // two bits unused
 	enum {stacksize = 100, spill = 0};
+
+	struct control
+	{
+		u32 what, nest;
+		s32 source, target; // relative to body start
+		control(unsigned what, int source = 0, int target = 0) : what(what), nest(0), source(source), target(target) {}
+		control(){}
+
+		void push(long *&stack) { *--*(control **)&stack = *this; }
+		struct control pop(long *&stack) { return *(*(control **)&stack)++; }
+		static void error() { throw std::string("Syntax"); }
+	};
 
 	struct teamachine &vm;
 	long *stackhome, *&stack;
