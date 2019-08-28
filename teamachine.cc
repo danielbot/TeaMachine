@@ -32,7 +32,7 @@ typedef int s32;
 typedef unsigned u32;
 typedef unsigned char byte;
 typedef long teacode;
-typedef	long (native)(long, long *);
+typedef	int (native)(int, long *);
 
 template<typename Type>static byte *align(Type p, unsigned bits)
 {
@@ -65,7 +65,7 @@ const long highbit = 1L << (longbits - 1);
 
 #define PACKED __attribute__((packed))
 
-extern "C" long foo(long argc, long *argv)
+extern "C" int foo(int argc, long *argv)
 {
 	printf("I am foo!");
 	for (int i = 0; i < argc; i++)
@@ -74,7 +74,7 @@ extern "C" long foo(long argc, long *argv)
 	return 0; // return zero results
 }
 
-extern "C" long nada(long argc, long *argv)
+extern "C" int nada(int argc, long *argv)
 {
 	trace("I am Nothing!");
 	return -1; // abort
@@ -176,7 +176,7 @@ struct teamachine {
 				exit(1);
 			}
 			long args[] = {1, 2, 3}, n = 3;
-			printf("fn(%li, argv) (%li) -> %li\n", n, (long)fn, fn(n, args));
+			printf("fn(%li, argv) (%li) -> %i\n", n, (long)fn, fn(n, args));
 			//exit(0);
 		}
 
@@ -1114,19 +1114,19 @@ execute: {
 
 native: {
 	const struct fixup *fixup = outside<struct fixup *>(*next++);
-	unsigned long argc = *stack++;
-	trace("(%p)(%i, %p)", fixup->fn, argc, stack);
-	unsigned long keep = (fixup->fn)(argc, stack);
-	trace("drop %li %li", argc, keep > argc ? argc: keep);
+	unsigned int argc = *stack++;
+	trace_on("(%p)(%i, %p)", fixup->fn, argc, stack);
+	unsigned int keep = (fixup->fn)(argc, stack);
+	trace_on("drop %i %i", argc, keep > argc ? argc : keep);
 	stack += argc - (keep > argc ? argc : keep); }
 	goto **next++;
 
 nativex: {
 	const struct fixup *fixup = outside<struct fixup *>(*stack++); // the only difference vs native
-	unsigned long argc = *stack++;
-	trace("(%p)(%i, %p)", fixup->fn, argc, stack);
-	unsigned long keep = (fixup->fn)(argc, stack);
-	trace("drop %li %li", argc, keep > argc ? argc: keep);
+	unsigned int argc = *stack++;
+	trace_on("(%p)(%i, %p)", fixup->fn, argc, stack);
+	unsigned int keep = (fixup->fn)(argc, stack);
+	trace_on("drop %i %i", argc, keep > argc ? argc : keep);
 	stack += argc - (keep > argc ? argc : keep); }
 	goto **next++;
 

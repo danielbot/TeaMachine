@@ -185,7 +185,7 @@ void usage(struct option *options, const char *name, const char *blurb)
 	printf("%s\n", help);
 }
 
-int tpcb_main(int argc, const char *argv[])
+long tpcb_main(int argc, const char *argv[])
 {
 	struct option options[] = {
 		{"scale", "s", OPT_HASARG|OPT_NUMBER, "Scale factor", "2"},
