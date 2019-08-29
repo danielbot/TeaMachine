@@ -102,6 +102,8 @@ static native *resolve(const void *name, int len)
 		error_exit(2, "%s!\n", error);
 	if (0)
 		printf("%.*s -> %p\n", len, (char *)name, fn);
+	if (0 && !fn)
+		printf("resolve %.*s failed!\n", len, (char *)name);
 	return fn ? fn : nada;
 }
 
@@ -704,24 +706,23 @@ int teacom::bootstrap()
 	struct teamachine::fixup *fixfoo = natcom("foo");
 	struct teamachine::fixup *fixbar = natcom("bar");
 	struct teamachine::fixup *fixfoobar = natcom("foobar");
+	struct teamachine::fixup *native_tpcb = natcom("tpcb_main");
 
 	teacode tcpb_ = colon("tpcb");
 	start_();
-	cstring("let's go"); op(_.count); op(_.output); call(dotcr_);
-	op(_.zero); op(_.rpush);
+	cstring("tea"); op(_.zero); op(_.bytecom); op(_.inc); op(_.outside); op(_.dup);
+	op(_.two); op(_.rpush);
 	begin_();
 		op(_.here);
 		call(wordin_); op(_.zero); op(_.bytecom);
 		op(_.dup); op(_.count); cstring(";"); op(_.count); op(_.compare);
 	while_();
-		op(_.dup); op(_.count); op(_.output); call(dotcr_);
 		op(_.inc); op(_.outside);
 		op(_.rpop); op(_.inc); op(_.rpush);
 	loop_();
 	op(_.drop);
 	op(_.i); op(_.verso);
-	op(_.rpop); op(_.query);
-	op(_.native); arg(vm.inside(fixfoobar));
+	op(_.rpop); op(_.native); arg(vm.inside(native_tpcb));
 
 	finish_();
 
@@ -988,7 +989,6 @@ pick: stack[0] = stack[stack[0] + 1]; // ( i -> a )
 verso:
 	{
 		unsigned n = *stack++, m = (n + 1) / 2;
-		trace_on("%i %i", n, m);
 		for (unsigned i = 0, j = i + n - 1; i < m; i++, j--)
 			std::swap(stack[i], stack[j]);
 	}
@@ -1401,6 +1401,8 @@ run: *--rstack = (long)next; next = body[0];
 #include <sys/stat.h>
 #include <fcntl.h>
 
+extern "C" int tpcb_main(int argc, const char *argv[]);
+
 int main(int argc, const char *argv[])
 {
 	if (0) {
@@ -1437,7 +1439,6 @@ int main(int argc, const char *argv[])
 	long huh[] = {_.output, _.n, ' ', _.out, _.n, '?', _.out, _.n, '\n', _.out, _.exit};
 
 	if (argc > 1 && !strcmp("tpcb", argv[1])) {
-		int tpcb_main(int argc, const char *argv[]);
 		return tpcb_main(argc, argv);
 	}
 

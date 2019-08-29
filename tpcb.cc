@@ -14,6 +14,7 @@ extern "C" {
 #include "shardmap/shardmap.h"
 
 #define trace trace_off
+#define warn trace_on
 
 typedef int64_t s64;
 
@@ -185,7 +186,7 @@ void usage(struct option *options, const char *name, const char *blurb)
 	printf("%s\n", help);
 }
 
-long tpcb_main(int argc, const char *argv[])
+extern "C" int tpcb_main(int argc, const char *argv[])
 {
 	struct option options[] = {
 		{"scale", "s", OPT_HASARG|OPT_NUMBER, "Scale factor", "2"},
@@ -201,7 +202,7 @@ long tpcb_main(int argc, const char *argv[])
 
 	if (optc < 0) {
 	        printf("%s!\n", opterror(optv));
-		exit(1);
+		return 1;
 	}
 
 	int s = 2, n = 1000000;
@@ -219,18 +220,20 @@ long tpcb_main(int argc, const char *argv[])
 			break;
 		case 'V':
 			printf("Shardmap tpcb benchmark by Daniel Phillips: version 0.0\n");
-			exit(0);
+			return 0;
 		case '?':
 			usage(options, argv[0], " tpcb <filename> [OPTIONS]");
-			exit(0);
+			return 0;
 		case 0:
 			usage(options, argv[0], 0);
-			exit(0);
+			return 0;
 		}
 	}
 
-	if (argc <= 2)
-		error_exit(1, "Usage: tcpv <filepath> --sf=<scale> --n=<steps>");
+	if (argc <= 2) {
+		warn("Usage: tcpv <filepath> --sf=<scale> --n=<steps>");
+		return 1;
+	}
 
 	int fds[5] = {};
 	for (int i = 0; i < 5; i++) {

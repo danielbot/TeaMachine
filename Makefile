@@ -10,7 +10,7 @@ else
 DEBUG = 0
 endif
 
-opt += -Wall -Wno-unused-variable -Wno-unused-function -rdynamic
+opt += -Wall -Wno-unused-variable -Wno-unused-function -rdynamic -fPIC
 lib = shardmap/shardmap.so shardmap/options.o -lbacktrace -ldl
 
 all: $(name)
