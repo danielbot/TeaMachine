@@ -115,7 +115,7 @@ int compare(const byte *s1, unsigned n1, const byte *s2, unsigned n2)
 
 static struct teacodes { teacode
 	n, s, cs,
-	dup, maydup, over, drop, swap, rot, pick,
+	dup, maydup, over, drop, swap, rot, pick, verso,
 	minusone, zero, one, two, three, four, five, six, seven, eight, nine, ten,
 	add, sub, mul, div, mod,
 	and_, or_, xor_,
@@ -524,6 +524,7 @@ int teacom::bootstrap()
 		{_.over, "over"},
 		{_.swap, "swap"},
 		{_.drop, "drop"},
+		{_.verso, "verso"},
 		{_.dot, "."},
 		{_.count, "count"},
 		{_.outside, "outside"},
@@ -706,6 +707,7 @@ int teacom::bootstrap()
 
 	teacode tcpb_ = colon("tpcb");
 	start_();
+	cstring("let's go"); op(_.count); op(_.output); call(dotcr_);
 	op(_.zero); op(_.rpush);
 	begin_();
 		op(_.here);
@@ -717,6 +719,7 @@ int teacom::bootstrap()
 		op(_.rpop); op(_.inc); op(_.rpush);
 	loop_();
 	op(_.drop);
+	op(_.i); op(_.verso);
 	op(_.rpop); op(_.query);
 	op(_.native); arg(vm.inside(fixfoobar));
 
@@ -770,6 +773,7 @@ int teamachine::run(teacode *next)
 	_.swap = (long)&&swap;
 	_.rot = (long)&&rot;
 	_.pick = (long)&&pick;
+	_.verso = (long)&&verso;
 	_.rpop = (long)&&rpop;
 	_.rpush = (long)&&rpush;
 
@@ -979,6 +983,15 @@ rot: { long x = stack[0]; stack[0] = stack[2]; stack[2] = stack[1]; stack[1] = x
 	goto **next++;
 
 pick: stack[0] = stack[stack[0] + 1]; // ( i -> a )
+	goto **next++;
+
+verso:
+	{
+		unsigned n = *stack++, m = (n + 1) / 2;
+		trace_on("%i %i", n, m);
+		for (unsigned i = 0, j = i + n - 1; i < m; i++, j--)
+			std::swap(stack[i], stack[j]);
+	}
 	goto **next++;
 
 rpop: *--stack = *rstack++;
