@@ -124,7 +124,7 @@ static struct teacodes { teacode
 	bytecom, halfcom, comma, compile, comcall,
 	fetch, store, cfetch, cstore, count,
 	rpop, rpush, jump, if__, unless__, times, do__, loop, i, exit, trap,
-	call, execute, native, nativex,
+	call, execute, native, natex,
 	running, comstart, comstop, literal, sep,
 	abort, nop, insert4, lookup4, remove4,
 	get4, put4, add4, add4x,
@@ -846,7 +846,7 @@ int teamachine::run(teacode *next)
 	_.call = (long)&&call;
 	_.execute = (long)&&execute;
 	_.native = (long)&&native;
-	_.nativex = (long)&&nativex;
+	_.natex = (long)&&natex;
 	_.trap = (long)&&trap;
 
 	/* boot compiler */
@@ -1166,7 +1166,7 @@ native: {
 	stack += argc - (keep > argc ? argc : keep); }
 	goto **next++;
 
-nativex: {
+natex: {
 	const struct fixup *fixup = outside<struct fixup *>(*stack++); // the only difference vs native
 	unsigned int argc = *stack++;
 	trace_on("(%p)(%i, %p)", fixup->fn, argc, stack);
@@ -1490,7 +1490,7 @@ int main(int argc, const char *argv[])
 				tea.op(_.zless);
 				tea.if_();
 					tea.op(_.inc); tea.if_();
-						tea.op(_.nativex);
+						tea.op(_.natex);
 					tea.else_();
 						tea.op(_.execute);
 					tea.end_();
