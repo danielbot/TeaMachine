@@ -74,6 +74,14 @@ extern "C" int foo(int argc, long *argv)
 	return 0; // return zero results
 }
 
+extern "C" int foobar(int argc, char **argv)
+{
+	for (int i = 0; i < argc; i++)
+		printf(" %s", argv[i]);
+	printf("\n");
+	return 0; // return zero results
+}
+
 extern "C" int nada(int argc, long *argv)
 {
 	trace("I am Nothing!");
@@ -683,6 +691,7 @@ int teacom::bootstrap()
 
 	struct teamachine::fixup *fixfoo = natcom("foo");
 	struct teamachine::fixup *fixbar = natcom("bar");
+	natcom("foobar");
 
 	if (0) {
 		colon("test");
