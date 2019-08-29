@@ -76,6 +76,7 @@ extern "C" int foo(int argc, long *argv)
 
 extern "C" int foobar(int argc, char **argv)
 {
+	printf("foobar");
 	for (int i = 0; i < argc; i++)
 		printf(" %s", argv[i]);
 	printf("\n");
@@ -122,7 +123,7 @@ static struct teacodes { teacode
 	eq, neq, less, more, lessq, moreq, zless, compare,
 	here, allot, align,
 	bytecom, halfcom, comma, compile, comcall,
-	fetch, store, cfetch, cstore, count,
+	fetch, store, cfetch, cstore, count, outside,
 	rpop, rpush, jump, if__, unless__, times, do__, loop, i, exit, trap,
 	call, execute, native, natex,
 	running, comstart, comstop, literal, sep,
@@ -525,6 +526,7 @@ int teacom::bootstrap()
 		{_.drop, "drop"},
 		{_.dot, "."},
 		{_.count, "count"},
+		{_.outside, "outside"},
 		{_.output, "output"},
 		{_.hexdump, "hexdump"},
 		{_.words, "words"},
@@ -700,18 +702,23 @@ int teacom::bootstrap()
 
 	struct teamachine::fixup *fixfoo = natcom("foo");
 	struct teamachine::fixup *fixbar = natcom("bar");
-	natcom("foobar");
+	struct teamachine::fixup *fixfoobar = natcom("foobar");
 
 	teacode tcpb_ = colon("tpcb");
 	start_();
-	cstring("let's go"); op(_.count); op(_.output); call(dotcr_);
+	op(_.zero); op(_.rpush);
 	begin_();
 		op(_.here);
-		call(wordin_); op(_.dup); op(_.count); cstring("."); op(_.count); op(_.compare);
-		op(_.query);
+		call(wordin_); op(_.zero); op(_.bytecom);
+		op(_.dup); op(_.count); cstring(";"); op(_.count); op(_.compare);
 	while_();
-		op(_.count); op(_.output); call(dotcr_);
+		op(_.dup); op(_.count); op(_.output); call(dotcr_);
+		op(_.inc); op(_.outside);
+		op(_.rpop); op(_.inc); op(_.rpush);
 	loop_();
+	op(_.drop);
+	op(_.rpop); op(_.query);
+	op(_.native); arg(vm.inside(fixfoobar));
 
 	finish_();
 
@@ -827,6 +834,7 @@ int teamachine::run(teacode *next)
 	_.cfetch = (long)&&cfetch;
 	_.cstore = (long)&&cstore;
 	_.count = (long)&&count;
+	_.outside = (long)&&outside;
 
 	/* dictionary */
 	_.vocab = (long)&&vocab;
@@ -1109,6 +1117,10 @@ count: { // ( text -> text+1 byte )
 	*--stack = c; }
 	goto **next++;
 
+outside: // ( p -> outside )
+	stack[0] = (long)outside(stack[0]);
+	goto **next++;
+
 /* control */
 
 jump: { long delta = *next++; next += delta; }
@@ -1160,18 +1172,18 @@ execute: {
 native: {
 	const struct fixup *fixup = outside<struct fixup *>(*next++);
 	unsigned int argc = *stack++;
-	trace_on("(%p)(%i, %p)", fixup->fn, argc, stack);
+	trace_off("(%p)(%i, %p)", fixup->fn, argc, stack);
 	unsigned int keep = (fixup->fn)(argc, stack);
-	trace_on("drop %i %i", argc, keep > argc ? argc : keep);
+	trace_off("drop %i %i", argc, keep > argc ? argc : keep);
 	stack += argc - (keep > argc ? argc : keep); }
 	goto **next++;
 
 natex: {
 	const struct fixup *fixup = outside<struct fixup *>(*stack++); // the only difference vs native
 	unsigned int argc = *stack++;
-	trace_on("(%p)(%i, %p)", fixup->fn, argc, stack);
+	trace_off("(%p)(%i, %p)", fixup->fn, argc, stack);
 	unsigned int keep = (fixup->fn)(argc, stack);
-	trace_on("drop %i %i", argc, keep > argc ? argc : keep);
+	trace_off("drop %i %i", argc, keep > argc ? argc : keep);
 	stack += argc - (keep > argc ? argc : keep); }
 	goto **next++;
 
