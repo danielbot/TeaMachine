@@ -104,6 +104,14 @@ static native *resolve(const void *name, int len)
 	return fn ? fn : nada;
 }
 
+int compare(const byte *s1, unsigned n1, const byte *s2, unsigned n2)
+{
+	unsigned head = std::min(n1, n2);
+	int order = memcmp(s1, s2, head);
+	trace_off("%.*s %.*s %i %i", head, s1, head, s2, order, (n1 < n2 ? -1 : n1 > n2 ? 1 : 0));
+	return !order ? (n1 < n2 ? -1 : n1 > n2 ? 1 : 0) : (order < 0 ? -1 : order > 0 ? 1 : 0);
+}
+
 static struct teacodes { teacode
 	n, s, cs,
 	dup, maydup, over, drop, swap, rot, pick,
@@ -111,7 +119,7 @@ static struct teacodes { teacode
 	add, sub, mul, div, mod,
 	and_, or_, xor_,
 	not_, inc, dec, abs, negate, invert,
-	eq, neq, less, more, lessq, moreq, zless,
+	eq, neq, less, more, lessq, moreq, zless, compare,
 	here, allot, align,
 	bytecom, halfcom, comma, compile, comcall,
 	fetch, store, cfetch, cstore, count,
@@ -226,9 +234,9 @@ struct teamachine {
 		comma(what);
 	}
 
-	void textcom(void *body, unsigned bytes)
+	void textcom(void *text, unsigned bytes)
 	{
-		memcpy(here, body, bytes);
+		memcpy(here, text, bytes);
 		grow(bytes);
 	}
 
@@ -537,6 +545,7 @@ int teacom::bootstrap()
 		{_.lessq, "<="},
 		{_.moreq, ">="},
 		{_.zless, "0<"},
+		{_.compare, "compare"},
 		{_.comstart, "]"},
 		{_.comstop, "[", immed},
 		{_.start_, "nest", immed},
@@ -676,14 +685,14 @@ int teacom::bootstrap()
 
 	colon(".\"", 0, 0, immed);
 	start_();
-	call(cstring_ );
+	call(cstring_);
 	lit(_.count);
 	op(_.comma);
 	lit(_.output);
 	op(_.comma);
 	finish_();
 
-	colon(".cr");
+	teacode dotcr_ = colon(".cr");
 	start_();
 	lit('\n');
 	op(_.out);
@@ -692,6 +701,25 @@ int teacom::bootstrap()
 	struct teamachine::fixup *fixfoo = natcom("foo");
 	struct teamachine::fixup *fixbar = natcom("bar");
 	natcom("foobar");
+
+	teacode tcpb_ = colon("tpcb");
+	start_();
+	cstring("let's go"); op(_.count); op(_.output); call(dotcr_);
+	begin_();
+		op(_.here);
+		call(wordin_); op(_.dup); op(_.count); cstring("."); op(_.count); op(_.compare);
+		op(_.query);
+	while_();
+		op(_.count); op(_.output); call(dotcr_);
+	loop_();
+
+	finish_();
+
+	colon(".cr");
+	start_();
+	lit('\n');
+	op(_.out);
+	finish_();
 
 	if (0) {
 		colon("test");
@@ -783,6 +811,7 @@ int teamachine::run(teacode *next)
 	_.lessq = (long)&&lessq;
 	_.moreq = (long)&&moreq;
 	_.zless = (long)&&zless;
+	_.compare = (long)&&compare;
 
 	/* storage */
 	_.here = (long)&&here;
@@ -1049,6 +1078,13 @@ moreq: { long b = *stack++, a = *stack++; *--stack = a >= b; }
 	goto **next++;
 
 zless: stack[0] = stack[0] < 0;
+	goto **next++;
+
+compare: { // ( text len text len -> n )
+	unsigned n2 = *stack++;	byte *s2 = outside(*stack++);
+	unsigned n1 = *stack++;	byte *s1 = outside(stack[0]);
+	trace_off("%p %u %p %u", s1, n1, s2, n2);
+	stack[0] = compare(s1, n1, s2, n2);	}
 	goto **next++;
 
 /* memory */
@@ -1342,6 +1378,11 @@ run: *--rstack = (long)next; next = body[0];
 
 int main(int argc, const char *argv[])
 {
+	if (0) {
+		printf("compare -> %i\n", compare((const byte *)"aa", 2, (const byte *)"ab", 2));
+		return 0;
+	}
+
 	tealib = dlopen(NULL, RTLD_NOW); // _LAZY also works
 	if (!tealib) {
 		printf("%s!\n", dlerror());
