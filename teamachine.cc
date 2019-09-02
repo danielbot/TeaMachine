@@ -52,6 +52,60 @@ extern "C" void error_exit(unsigned exitcode, const char *reason, ...)
 	exit(exitcode);
 }
 
+/* Priority queue for codewalker */
+template <typename Type, long LOW = 0> struct minheap
+{
+	std::vector<Type> vec;
+
+	Type least() { return vec[0]; } // root
+	unsigned left(unsigned i) { return ((i << 1) + 1); }
+	unsigned right(unsigned i) { return ((i << 1) + 2); }
+	unsigned parent(unsigned i) { return (i - 1) >> 1; }
+	unsigned size() { return vec.size(); }
+	void swap(unsigned i, unsigned j) { std::swap(vec[i], vec[j]); }
+
+	void heapify(unsigned i)
+	{
+		while (1) {
+			/* Heapify node i assuming left and right already heapified */
+			unsigned l = left(i), r = right(i), j = i, n = size();
+			if (l < n && vec[l] < vec[i])
+				j = l;
+			if (r < n && vec[r] < vec[j])
+				j = r;
+			if (i == j)
+				break;
+			swap(i, j);
+			i = j;
+		}
+	}
+
+	/* Insert unordered at end then reheapify */
+	void insert(Type key) { vec.push_back(key); restore(size() - 1); }
+
+	/* Reduce node i to minus infinity then extract */
+	void remove(unsigned i) { reduce(i, LOW); extract(); }
+
+	/* Reduce node i to val where val is less than node i */
+	void reduce(unsigned i, Type val) { vec[i] = val; restore(i); }
+
+	/* Remove and return minimum element (root) */
+	Type extract() {
+		assert(size());
+		Type root = vec[0];
+		vec[0] = vec.back();
+		vec.pop_back();
+		heapify(0);
+		return root;
+	}
+
+	/* Restore heap property if violated */
+	void restore(unsigned i) {
+		for (unsigned j = parent(i); i && vec[i] < vec[j]; i = j)
+			swap(i, j);
+	}
+};
+
 /*
  * Use high bit to mark primitive vs threaded tokens so execute can do the
  * right thing. This bit is available as a flag only if linux never maps
