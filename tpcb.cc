@@ -1,20 +1,23 @@
-#include <cstddef>
-#include <vector>
+#include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/time.h>
+#include <cstddef>
+#include <vector>
 
 extern "C" {
 #include "debug.h"
 #include "Shardmap/size.h"
-#include "Shardmap/recops.h"
+#include "Shardmap/utility.h"
 #include "Shardmap/options.h"
 }
 
-#include "Shardmap/shardmap.h"
-
 #define trace trace_off
 #define warn trace_on
+
+#include "Shardmap/recops.cc"
+#include "Shardmap/shardmap.h"
 
 typedef int64_t s64;
 

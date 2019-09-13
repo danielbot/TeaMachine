@@ -2,10 +2,12 @@
 
 name=tea
 
-opt = -O3
+optbase=-Wno-sign-compare
+
+opt = -O3 $(optbase)
 
 ifdef DEBUG
-opt = -g -O0
+opt = -g -O0 $(optbase)
 else
 DEBUG = 0
 endif

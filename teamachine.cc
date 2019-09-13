@@ -193,7 +193,8 @@ static struct teacodes { teacode
 
 #include <vector>
 #include "Shardmap/size.h"
-#include "Shardmap/recops.h"
+#include "Shardmap/utility.h"
+#include "Shardmap/recops.cc"
 #include "Shardmap/shardmap.h"
 
 struct teamachine {
