@@ -6,12 +6,12 @@
 
 extern "C" {
 #include "debug.h"
-#include "shardmap/size.h"
-#include "shardmap/recops.h"
-#include "shardmap/options.h"
+#include "Shardmap/size.h"
+#include "Shardmap/recops.h"
+#include "Shardmap/options.h"
 }
 
-#include "shardmap/shardmap.h"
+#include "Shardmap/shardmap.h"
 
 #define trace trace_off
 #define warn trace_on

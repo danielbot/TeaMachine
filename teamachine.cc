@@ -192,9 +192,9 @@ static struct teacodes { teacode
 } _;
 
 #include <vector>
-#include "shardmap/size.h"
-#include "shardmap/recops.h"
-#include "shardmap/shardmap.h"
+#include "Shardmap/size.h"
+#include "Shardmap/recops.h"
+#include "Shardmap/shardmap.h"
 
 struct teamachine {
 	typedef long dictstar; // dict relative pointer

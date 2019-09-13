@@ -11,7 +11,7 @@ DEBUG = 0
 endif
 
 opt += -Wall -Wno-unused-variable -Wno-unused-function -rdynamic -fPIC
-lib = shardmap/shardmap.so shardmap/options.o -lbacktrace -ldl
+lib = Shardmap/shardmap.so Shardmap/options.o -lbacktrace -ldl
 
 all: $(name)
 	@: # quiet make when nothing to do
