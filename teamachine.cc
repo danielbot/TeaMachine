@@ -194,7 +194,7 @@ static struct teacodes { teacode
 #include <vector>
 #include "Shardmap/size.h"
 #include "Shardmap/utility.h"
-#include "Shardmap/recops.cc"
+//#include "Shardmap/recops.cc"
 #include "Shardmap/shardmap.h"
 
 struct teamachine {
@@ -1519,7 +1519,7 @@ int main(int argc, const char *argv[])
 		};
 
 		int fd = open("foo", O_CREAT|O_RDWR, 0644);
-		struct keymap table1{head, fd, 8};
+		struct keymap table1{head, fd, fixsize::recops, 8};
 		vm.db.push_back((struct teamachine::dbreg){&table1});
 
 		if (0) {

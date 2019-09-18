@@ -16,7 +16,6 @@ extern "C" {
 #define trace trace_off
 #define warn trace_on
 
-#include "Shardmap/recops.cc"
 #include "Shardmap/shardmap.h"
 
 typedef int64_t s64;
@@ -77,10 +76,10 @@ int tpcb_run(int fds[5], unsigned scalefactor, unsigned iterations)
 	/*
 	 * One kvs table per file
 	 */
-	struct keymap branches{head, fds[1], 100};
-	struct keymap accounts{head, fds[2], 100};
-	struct keymap tellers{head, fds[3], 100};
-	struct keymap history{head, fds[4], 50};
+	struct keymap branches{head, fds[1], fixsize::recops, 100};
+	struct keymap accounts{head, fds[2], fixsize::recops, 100};
+	struct keymap tellers{head, fds[3], fixsize::recops, 100};
+	struct keymap history{head, fds[4], fixsize::recops, 50};
 
 	/*
 	 * Provide these lists to driver to generate transactions
