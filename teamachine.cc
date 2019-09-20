@@ -197,8 +197,9 @@ static struct teacodes { teacode
 //#include "Shardmap/recops.cc"
 #include "Shardmap/shardmap.h"
 
+typedef long dictstar; // dict relative pointer
+
 struct teamachine {
-	typedef long dictstar; // dict relative pointer
 
 	struct entry {
 		dictstar link; byte flags, len, name[0];
@@ -427,7 +428,7 @@ struct teacom
 		return ((control *)stack)->pop(stack);
 	};
 
-	teamachine::dictstar colon(const byte *name, byte len, teacode *body, unsigned bytes, byte flags)
+	dictstar colon(const byte *name, byte len, teacode *body, unsigned bytes, byte flags)
 	{
 		struct teamachine::entry *entry = vm.symcom((const byte *)name, len, flags | embedflag);
 		vm.textcom(body, bytes);
@@ -436,7 +437,7 @@ struct teacom
 
 	/* wrappers for oldschool zstrings */
 
-	teamachine::dictstar colon(const char *name, teacode *body = 0, unsigned bytes = 0, byte flags = basekind)
+	dictstar colon(const char *name, teacode *body = 0, unsigned bytes = 0, byte flags = basekind)
 	{ return colon((const byte *)name, strlen(name), body, bytes, flags); }
 
 	struct teamachine::fixup *natcom(const char *name)
@@ -1536,7 +1537,7 @@ int main(int argc, const char *argv[])
 		}
 
 		if (1) {
-			teamachine::dictstar test = vm.inside(vm.here);
+			dictstar test = vm.inside(vm.here);
 			tea.cstring("foobar!");
 			tea.op(_.six), tea.op(_.insert4), tea.arg(0), tea.arg(0);
 			tea.op(_.six),
@@ -1559,7 +1560,7 @@ int main(int argc, const char *argv[])
 	}
 
 	if (argc == 1) {
-		teamachine::dictstar teashell = vm.inside(vm.here);
+		dictstar teashell = vm.inside(vm.here);
 		tea.start_();
 		tea.call(inside(hello));
 		tea.begin_();
