@@ -21,6 +21,7 @@ extern "C" {
 }
 
 #define trace trace_off
+#define warn trace_on
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -534,29 +535,36 @@ struct teamachine {
 
 	void codewalk(dictstar nextstar)
 	{
-		long *next = outside<long *>(nextstar);
+		long *next = outside<long *>(nextstar), *base = next;
+		struct minheap<long *> heap{};
 		for (unsigned i = 0; i < 50; i++) {
 			teacode op = *next++;
-			if (op == _.exit) {
-				printf(";\n");
+			trace("next %li least %lx", next - base, heap.vec.size() ? heap.least() - base : 0);
+			struct teainfo *what = getinfo(op);
+			if (!what) {
+				warn("?%li?", op);
 				break;
 			}
-			trace("next %p op %lx (call = %lx)", next, op, _.call);
-			struct teainfo *what = getinfo(op);
-			if (what) {
-				printf("%s/%i\n", what->name, what->nargs);
-				next += what->nargs;
-				if (what->blob) {
-					u8 *text = (u8 *)next;
-					hexdump(text + 1, *text);
-					next = cnext(next);
-					printf("%p\n", next);
-				} else if (what->jump) {
-					long delta = *next++;
-					printf("%li\n", delta);
-				}
-			} else
-				printf("?%li?\n", op);
+			trace("[%li] %s+%i", next - base, what->name, what->nargs);
+			next += what->nargs;
+			if (what->blob) {
+				u8 *text = (u8 *)next;
+				hexdump(text + 1, *text);
+				next = cnext(next);
+			} else if (what->jump) {
+				long delta = *next++;
+				trace("%li %s", delta, delta < 0 ? "backward" : "forward");
+				if (delta >= 0)
+					heap.insert(next + delta);
+			}
+			if (what->stop || (heap.vec.size() && next == heap.least())) {
+				trace("stop %lx", next - base);
+				if (heap.vec.size()) {
+					next = heap.extract();
+				} else
+					if (what->stop)
+						break;
+			}
 		}
 	}
 
