@@ -40,6 +40,12 @@ template<typename Type>static byte *align(Type p, unsigned bits)
 	return (Type)p + (-(long)p & mask);
 }
 
+static long *cnext(long *next)
+{
+	unsigned char *text = (unsigned char *)next, c = *text;
+	return (long *)(text + 1 + c + (~c & 7));
+}
+
 extern "C" void error_exit(unsigned exitcode, const char *reason, ...)
 {
 	va_list arglist;
@@ -170,26 +176,178 @@ int compare(const byte *s1, unsigned n1, const byte *s2, unsigned n2)
 }
 
 static struct teacodes { teacode
-	n, s, cs,
+	nop,
+	query, rquery, dot, hexdump, in, out, output,
 	dup, maydup, over, drop, swap, rot, pick, verso,
-	minusone, zero, one, two, three, four, five, six, seven, eight, nine, ten,
 	add, sub, mul, div, mod,
-	and_, or_, xor_,
-	not_, inc, dec, abs, negate, invert,
+	and_, or_, xor_, not_, inc, dec, abs, negate, invert,
 	eq, neq, less, more, lessq, moreq, zless, compare,
+	fetch, store, cfetch, cstore, count, outside,
 	here, allot, align,
 	bytecom, halfcom, comma, compile, comcall,
-	fetch, store, cfetch, cstore, count, outside,
-	rpop, rpush, jump, if__, unless__, times, do__, loop, i, exit, trap,
-	call, execute, native, natex,
+	rpop, rpush,
 	running, comstart, comstop, literal, sep,
-	abort, nop, insert4, lookup4, remove4,
-	get4, put4, add4, add4x,
-	query, rquery, in, out, output, dot, hexdump,
 	vocab, to_vocab, find, words,
+	insert4, lookup4, remove4, get4, put4, add4, add4x,
 	start_, finish_, if_, unless_, else_, end_, begin_, do_, while_, loop_, until_, native_,
-	run, bye;
+	if__, unless__, jump, times, do__, loop, i,
+	minusone, zero, one, two, three, four, five, six, seven, eight, nine, ten,
+	n, s, cs, call, exit, execute, native, natex,
+	run, abort, trap, bye;
 } _;
+
+struct teainfo {
+	const char *name;
+	short nargs;
+	bool jump:1, stop:1, blob:1;
+};
+
+static struct {
+	teainfo
+	nop,
+	query, rquery, dot, hexdump, in, out, output,
+	dup, maydup, over, drop, swap, rot, pick, verso,
+	add, sub, mul, div, mod,
+	and_, or_, xor_, not_, inc, dec, abs, negate, invert,
+	eq, neq, less, more, lessq, moreq, zless, compare,
+	fetch, store, cfetch, cstore, count, outside,
+	here, allot, align,
+	bytecom, halfcom, comma, compile, comcall,
+	rpop, rpush,
+	running, comstart, comstop, literal, sep,
+	vocab, to_vocab, find, words,
+	insert4, lookup4, remove4, get4, put4, add4, add4x,
+	start_, finish_, if_, unless_, else_, end_, begin_, do_, while_, loop_, until_, native_,
+	if__, unless__, jump, times, do__, loop, i,
+	minusone, zero, one, two, three, four, five, six, seven, eight, nine, ten,
+	n, s, cs, call, exit, execute, native, natex,
+	run, abort, trap, bye;
+} __ = {
+	.nop = {"nop"},
+	.query = {"?"},
+	.rquery = {"?r"},
+	.dot = {"."},
+	.hexdump = {"hexdump"},
+	.in = {"in"},
+	.out = {"out"},
+	.output = {"output"},
+	.dup = {"dup"},
+	.maydup = {"?dup"},
+	.over = {"over"},
+	.drop = {"drop"},
+	.swap = {"swap"},
+	.rot = {"rot"},
+	.pick = {"pick"},
+	.verso = {"verso"},
+	.add = {"+"},
+	.sub = {"-"},
+	.mul = {"*"},
+	.div = {"/"},
+	.mod = {"mod"},
+	.and_ = {"and"},
+	.or_ = {"or"},
+	.xor_ = {"xor"},
+	.not_ = {"not"},
+	.inc = {"1+"},
+	.dec = {"1-"},
+	.abs = {"abs"},
+	.negate = {"negate"},
+	.invert = {"invert"},
+	.eq = {"="},
+	.neq = {"<>"},
+	.less = {"<"},
+	.more = {">"},
+	.lessq = {"<="},
+	.moreq = {">="},
+	.zless = {"0<"},
+	.compare = {"compare"},
+	.fetch = {"@"},
+	.store = {"!"},
+	.cfetch = {"c@"},
+	.count = {"count"},
+	.outside = {"outside"},
+	.here = {"here"},
+	.allot = {"allot"},
+	.align = {"align"},
+	.bytecom = {"c,"},
+	.halfcom = {"h,"},
+	.comma = {","},
+	.compile = {"compile"},
+	.comcall = {"comcall"},
+	.rpop = {"r>"},
+	.rpush = {">r"},
+	.running = {"running"},
+	.comstart = {"]"},
+	.comstop = {"["},
+	.literal = {"literal"},
+	.sep = {"sep"},
+	.vocab = {"vocab"},
+	.to_vocab = {"=vocab"},
+	.find = {"find"},
+	.words = {"words"},
+	.insert4 = {"insert4"},
+	.lookup4 = {"lookup4"},
+	.remove4 = {"remove4"},
+	.get4 = {"get4"},
+	.put4 = {"put4"},
+	.add4 = {"add4"},
+	.add4x = {"add4x"},
+	.start_ = {"start_"},
+	.finish_ = {"finish_"},
+	.if_ = {"if_"},
+	.unless_ = {"unless_"},
+	.else_ = {"else_"},
+	.end_ = {"end_"},
+	.begin_ = {"begin_"},
+	.do_ = {"do_"},
+	.while_ = {"while_"},
+	.loop_ = {"loop_"},
+	.until_ = {"until_"},
+	.native_ = {"native_"},
+	.if__ = {";if", 0, 1},
+	.unless__ = {";unless", 0, 1},
+	.jump = {";go", 0, 1, 1},
+	.times = {"times"},
+	.do__ = {"do"},
+	.loop = {"loop"},
+	.i = {"i"},
+	.minusone = {";-1"},
+	.zero = {";0"},
+	.one = {";1"},
+	.two = {";2"},
+	.three = {";3"},
+	.four = {";4"},
+	.five = {";5"},
+	.six = {";6"},
+	.seven = {";7"},
+	.eight = {";8"},
+	.nine = {";9"},
+	.ten = {";10"},
+	.n = {";n", 1},
+	.s = {";s", 0, 0, 0, 1 },
+	.cs = {";cs", 0, 0, 0, 1},
+	.call = {"call", 1},
+	.exit = {"exit", 0, 1},
+	.execute = {"execute"},
+	.native = {"native", 1},
+	.natex = {"natex"},
+	.run = {"run"},
+	.abort = {"abort"},
+	.trap = {"trap"},
+	.bye = {"bye"},
+};
+
+struct teainfo *getinfo(teacode op)
+{
+	for (unsigned i = 0; i < sizeof _ / sizeof _.n; i++) {
+		teacode op1 = ((teacode *)&_)[i];
+		//printf("%lx ", op1);
+		if (op == op1)
+			return ((teainfo *)&__) + i;
+	// printf("\n");
+	}
+	return 0;
+}
 
 #include <vector>
 #include "Shardmap/size.h"
@@ -372,8 +530,37 @@ struct teamachine {
 		return fixup;
 	};
 
-	int run(teacode *boot);
 	void grow(unsigned bytes) { here = align(here + bytes, dictalign); }
+
+	void codewalk(dictstar nextstar)
+	{
+		long *next = outside<long *>(nextstar);
+		for (unsigned i = 0; i < 50; i++) {
+			teacode op = *next++;
+			if (op == _.exit) {
+				printf(";\n");
+				break;
+			}
+			trace("next %p op %lx (call = %lx)", next, op, _.call);
+			struct teainfo *what = getinfo(op);
+			if (what) {
+				printf("%s/%i\n", what->name, what->nargs);
+				next += what->nargs;
+				if (what->blob) {
+					u8 *text = (u8 *)next;
+					hexdump(text + 1, *text);
+					next = cnext(next);
+					printf("%p\n", next);
+				} else if (what->jump) {
+					long delta = *next++;
+					printf("%li\n", delta);
+				}
+			} else
+				printf("?%li?\n", op);
+		}
+	}
+
+	int run(teacode *boot);
 };
 
 struct teacom
@@ -1562,7 +1749,7 @@ int main(int argc, const char *argv[])
 	if (argc == 1) {
 		dictstar teashell = vm.inside(vm.here);
 		tea.start_();
-		tea.call(inside(hello));
+		tea.cstring("hello\n"); tea.op(_.count); tea.op(_.output);
 		tea.begin_();
 			tea.call(inside(inword));
 			tea.op(_.find);
@@ -1619,6 +1806,11 @@ int main(int argc, const char *argv[])
 		 *     then
 		 *   again ;
 		 */
+
+		if (1) {
+			vm.codewalk(teashell);
+			return 0;
+		}
 
 		if (0)
 			vm.do_fixups(); // necessary only at load/link time
