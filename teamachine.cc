@@ -358,6 +358,8 @@ struct teainfo *getinfo(teacode op)
 
 typedef long dictstar; // dict relative pointer
 
+typedef void (*codewalk_t)(teacode *where, struct teainfo *what);
+
 struct teamachine {
 
 	struct entry {
@@ -533,7 +535,7 @@ struct teamachine {
 
 	void grow(unsigned bytes) { here = align(here + bytes, dictalign); }
 
-	void codewalk(dictstar nextstar)
+	void codewalk(dictstar nextstar, codewalk_t fn)
 	{
 		long *next = outside<long *>(nextstar), *base = next;
 		struct minheap<long *> heap{};
@@ -545,11 +547,14 @@ struct teamachine {
 				warn("?%li?", op);
 				break;
 			}
+
 			trace("[%li] %s+%i", next - base, what->name, what->nargs);
+			fn(next - 1, what);
+
 			next += what->nargs;
 			if (what->blob) {
 				u8 *text = (u8 *)next;
-				hexdump(text + 1, *text);
+				trace_off(hexdump(text + 1, *text));
 				next = cnext(next);
 			} else if (what->jump) {
 				long delta = *next++;
@@ -1654,6 +1659,18 @@ run: *--rstack = (long)next; next = body[0];
 
 extern "C" int tpcb_main(int argc, const char *argv[]);
 
+void show_op(teacode *where, struct teainfo *what)
+{
+	if (0)
+		printf(" [%p]", where);
+	if (1)
+		printf(" %s", what->name);
+	if (0)
+		printf("+%i", what->nargs);
+	if (0)
+		printf(" (%i:%i)", what->stop, what->jump);
+}
+
 int main(int argc, const char *argv[])
 {
 	if (0) {
@@ -1816,7 +1833,9 @@ int main(int argc, const char *argv[])
 		 */
 
 		if (1) {
-			vm.codewalk(teashell);
+			printf("==>");
+			vm.codewalk(teashell, show_op);
+			printf(" ;\n");
 			return 0;
 		}
 
