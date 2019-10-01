@@ -562,13 +562,16 @@ struct teamachine {
 				if (delta >= 0)
 					heap.insert(next + delta);
 			}
-			if (what->stop || (heap.vec.size() && next == heap.least())) {
+			if (what->stop) {
 				trace("stop %lx", next - base);
-				if (heap.vec.size()) {
-					next = heap.extract();
-				} else
-					if (what->stop)
-						break;
+				if (!heap.vec.size()) {
+					trace(";");
+					break;
+				}
+				next = heap.extract();
+			}
+			while (heap.vec.size() && next == heap.least()) {
+				heap.extract();
 			}
 		}
 	}
@@ -1659,7 +1662,7 @@ run: *--rstack = (long)next; next = body[0];
 
 extern "C" int tpcb_main(int argc, const char *argv[]);
 
-void show_op(teacode *where, struct teainfo *what)
+void show_op(teacode *where, struct teainfo *what, teacode *jump = 0)
 {
 	if (0)
 		printf(" [%p]", where);
