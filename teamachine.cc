@@ -556,12 +556,16 @@ struct teamachine {
 				u8 *text = (u8 *)next;
 				trace_off(hexdump(text + 1, *text));
 				next = cnext(next);
-			} else if (what->jump) {
+				continue;
+			}
+
+			if (what->jump) {
 				long delta = *next++;
 				trace("%li %s", delta, delta < 0 ? "backward" : "forward");
 				if (delta >= 0)
 					heap.insert(next + delta);
 			}
+
 			if (what->stop) {
 				trace("stop %lx", next - base);
 				if (!heap.vec.size()) {
@@ -570,9 +574,9 @@ struct teamachine {
 				}
 				next = heap.extract();
 			}
-			while (heap.vec.size() && next == heap.least()) {
+
+			while (heap.vec.size() && next == heap.least())
 				heap.extract();
-			}
 		}
 	}
 
@@ -1662,7 +1666,7 @@ run: *--rstack = (long)next; next = body[0];
 
 extern "C" int tpcb_main(int argc, const char *argv[]);
 
-void show_op(teacode *where, struct teainfo *what, teacode *jump = 0)
+void show_op(teacode *where, struct teainfo *what)
 {
 	if (0)
 		printf(" [%p]", where);
@@ -1836,7 +1840,7 @@ int main(int argc, const char *argv[])
 		 */
 
 		if (1) {
-			printf("==>");
+			printf(": <name>");
 			vm.codewalk(teashell, show_op);
 			printf(" ;\n");
 			return 0;
