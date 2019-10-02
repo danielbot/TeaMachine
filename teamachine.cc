@@ -88,16 +88,16 @@ template <typename Type, long LOW = 0> struct minheap
 	}
 
 	/* Insert unordered at end then reheapify */
-	void insert(Type key) { vec.push_back(key); restore(size() - 1); }
+	void push(Type key) { vec.push_back(key); restore(size() - 1); }
 
-	/* Reduce node i to minus infinity then extract */
-	void remove(unsigned i) { reduce(i, LOW); extract(); }
+	/* Reduce node i to minus infinity then pull */
+	void erase(unsigned i) { reduce(i, LOW); pull(); }
 
 	/* Reduce node i to val where val is less than node i */
 	void reduce(unsigned i, Type val) { vec[i] = val; restore(i); }
 
 	/* Remove and return minimum element (root) */
-	Type extract() {
+	Type pull() {
 		assert(size());
 		Type root = vec[0];
 		vec[0] = vec.back();
@@ -563,7 +563,7 @@ struct teamachine {
 				long delta = *next++;
 				trace("%li %s", delta, delta < 0 ? "backward" : "forward");
 				if (delta >= 0)
-					heap.insert(next + delta);
+					heap.push(next + delta);
 			}
 
 			if (what->stop) {
@@ -572,11 +572,11 @@ struct teamachine {
 					trace(";");
 					break;
 				}
-				next = heap.extract();
+				next = heap.pull();
 			}
 
 			while (heap.vec.size() && next == heap.least())
-				heap.extract();
+				heap.pull();
 		}
 	}
 
