@@ -541,7 +541,7 @@ struct teamachine {
 		struct minheap<long *> heap{};
 		for (unsigned i = 0; i < 50; i++) {
 			teacode op = *next++;
-			trace("next %li least %lx", next - base, heap.vec.size() ? heap.least() - base : 0);
+			trace("next %li least %lx", next - base, heap.size() ? heap.least() - base : 0);
 			struct teainfo *what = getinfo(op);
 			if (!what) {
 				warn("?%li?", op);
@@ -568,14 +568,14 @@ struct teamachine {
 
 			if (what->stop) {
 				trace("stop %lx", next - base);
-				if (!heap.vec.size()) {
+				if (!heap.size()) {
 					trace(";");
 					break;
 				}
 				next = heap.pull();
 			}
 
-			while (heap.vec.size() && next == heap.least())
+			while (heap.size() && next == heap.least())
 				heap.pull();
 		}
 	}
