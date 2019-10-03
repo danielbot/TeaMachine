@@ -890,7 +890,11 @@ int teacom::bootstrap()
 	start_();
 	call(inword_); op(_.find); op(_.maydup); if_();
 		op(_.abs); op(_.dec); if_(); op(_.abort); end_();
-		op(_.running); unless_(); op(_.compile); end_(); op(_.exit);
+		op(_.running); unless_(); // see similar seq in teashell
+			lit(_.n);
+			op(_.comma);
+			op(_.comma);
+		end_(); op(_.exit);
 	end_();
 	op(_.count), call(huh_); op(_.abort);
 	finish_();
@@ -1496,14 +1500,12 @@ comma: comma(*stack++); // ( n -> )
 	goto **next++;
 
 compile: // ( token -> )
-	if (stack[0] >= 0) {
-		comma(_.call);
-		comma(*stack++);
+	if (stack[0] < 0) {
+		comma(((teacode *)&_.nop)[*stack++ & ~highbit]);
 		goto **next++;
 	}
-	printf("compile %lx to %lx %lx\n", *stack & ~highbit, ((teacode *)&_.nop)[*stack & ~highbit], _.query);
-	comma(((teacode *)&_.nop)[*stack++ & ~highbit]);
-//	comma(*stack++ & ~highbit);
+	comma(_.call);
+	comma(*stack++);
 	goto **next++;
 
 comcall: { // ( p -> )
