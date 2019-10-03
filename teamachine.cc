@@ -764,71 +764,71 @@ int teacom::bootstrap()
 	long stackbase[stacksize], *stackhome = stackbase + stacksize - spill, *stack = stackhome;
 	vm.run(0); // discover labels
 
-	struct { long token; const char *name; byte flags = basekind; } core[] = {
-		{_.bye, "bye"},
-		{_.query, "?"},
-		{_.abort, "abort"},
-		{_.here, "here"},
-		{_.vocab, "vocab"},
-		{_.to_vocab, "vocab!"},
-		{_.allot, "allot"},
-		{_.align, "align"},
-		{_.execute, "execute"},
-		{_.bytecom, "c,"},
-		{_.halfcom, "half,"},
-		{_.comma, ","},
-		{_.fetch, "@"},
-		{_.store, "!"},
-		{_.cfetch, "c@"},
-		{_.cstore, "c!"},
-		{_.zero, "0"},
-		{_.one, "1"},
-		{_.two, "2"},
-		{_.three, "3"},
-		{_.dup, "dup"},
-		{_.maydup, "?dup"},
-		{_.over, "over"},
-		{_.swap, "swap"},
-		{_.drop, "drop"},
-		{_.verso, "verso"},
-		{_.dot, "."},
-		{_.count, "count"},
-		{_.outside, "outside"},
-		{_.output, "output"},
-		{_.hexdump, "hexdump"},
-		{_.words, "words"},
-		{_.not_, "not"},
-		{_.less, "<"},
-		{_.sub, "-"},
-		{_.add, "+"},
-		{_.mul, "*"},
-		{_.div, "/"},
-		{_.mod, "mod"},
-		{_.and_, "and"},
-		{_.or_, "or"},
-		{_.xor_, "xor"},
-		{_.eq, "="},
-		{_.neq, "<>"},
-		{_.less, "<"},
-		{_.more, ">"},
-		{_.lessq, "<="},
-		{_.moreq, ">="},
-		{_.zless, "0<"},
-		{_.compare, "compare"},
-		{_.comstart, "]"},
-		{_.comstop, "[", immed},
-		{_.start_, "nest", immed},
-		{_.finish_, "back", immed},
-		{_.if_, "if", immed},
-		{_.unless_, "unless", immed},
-		{_.else_, "else", immed},
-		{_.end_, "then", immed},
-		{_.end_, "end", immed},
-		{_.begin_, "begin", immed},
-		{_.do_, "do", immed},
-		{_.while_, "while", immed},
-		{_.loop_, "loop", immed},
-		{_.until_, "until", immed},
+	struct { long *token; const char *name; byte flags = basekind; } core[] = {
+		{&_.bye, "bye"},
+		{&_.query, "?"},
+		{&_.abort, "abort"},
+		{&_.here, "here"},
+		{&_.vocab, "vocab"},
+		{&_.to_vocab, "vocab!"},
+		{&_.allot, "allot"},
+		{&_.align, "align"},
+		{&_.execute, "execute"},
+		{&_.bytecom, "c,"},
+		{&_.halfcom, "half,"},
+		{&_.comma, ","},
+		{&_.fetch, "@"},
+		{&_.store, "!"},
+		{&_.cfetch, "c@"},
+		{&_.cstore, "c!"},
+		{&_.zero, "0"},
+		{&_.one, "1"},
+		{&_.two, "2"},
+		{&_.three, "3"},
+		{&_.dup, "dup"},
+		{&_.maydup, "?dup"},
+		{&_.over, "over"},
+		{&_.swap, "swap"},
+		{&_.drop, "drop"},
+		{&_.verso, "verso"},
+		{&_.dot, "."},
+		{&_.count, "count"},
+		{&_.outside, "outside"},
+		{&_.output, "output"},
+		{&_.hexdump, "hexdump"},
+		{&_.words, "words"},
+		{&_.not_, "not"},
+		{&_.less, "<"},
+		{&_.sub, "-"},
+		{&_.add, "+"},
+		{&_.mul, "*"},
+		{&_.div, "/"},
+		{&_.mod, "mod"},
+		{&_.and_, "and"},
+		{&_.or_, "or"},
+		{&_.xor_, "xor"},
+		{&_.eq, "="},
+		{&_.neq, "<>"},
+		{&_.less, "<"},
+		{&_.more, ">"},
+		{&_.lessq, "<="},
+		{&_.moreq, ">="},
+		{&_.zless, "0<"},
+		{&_.compare, "compare"},
+		{&_.comstart, "]"},
+		{&_.comstop, "[", immed},
+		{&_.start_, "nest", immed},
+		{&_.finish_, "back", immed},
+		{&_.if_, "if", immed},
+		{&_.unless_, "unless", immed},
+		{&_.else_, "else", immed},
+		{&_.end_, "then", immed},
+		{&_.end_, "end", immed},
+		{&_.begin_, "begin", immed},
+		{&_.do_, "do", immed},
+		{&_.while_, "while", immed},
+		{&_.loop_, "loop", immed},
+		{&_.until_, "until", immed},
 	};
 
 	enum {symbols = sizeof core / sizeof *core};
@@ -836,12 +836,12 @@ int teacom::bootstrap()
 	/* create bootstrap vocabulary */
 
 	for (unsigned i = 0; i < sizeof core / sizeof *core; i++)
-		[this](const char *name, byte flags, teacode token)
+		[this](const char *name, byte flags, teacode *token)
 		{
-			vm.comma(token | highbit);
+			vm.comma((token - &_.nop) | highbit);
 			vm.symcom((const byte *)name, strlen(name), flags);
 		}
-		(core[i].name, core[i].flags, core[i].token | highbit);
+		(core[i].name, core[i].flags, core[i].token);
 
 	if (0)
 		printf("sizeof(struct control) %lu\n", sizeof(struct control));
@@ -1441,7 +1441,7 @@ call:
 execute: {
 	long what = *stack++;
 	if (what < 0)
-		goto *(what & ~highbit);
+		goto *(((teacode *)&_.nop)[what & ~highbit]);
 	*--rstack = (long)next;
 	next = thread(what); }
 	goto **next++;
@@ -1495,10 +1495,15 @@ halfcom: halfcom(*stack++); // ( h -> )
 comma: comma(*stack++); // ( n -> )
 	goto **next++;
 
-compile: // ( n -> )
-	if (stack[0] >= 0)
+compile: // ( token -> )
+	if (stack[0] >= 0) {
 		comma(_.call);
-	comma(*stack++ & ~highbit);
+		comma(*stack++);
+		goto **next++;
+	}
+	printf("compile %lx to %lx %lx\n", *stack & ~highbit, ((teacode *)&_.nop)[*stack & ~highbit], _.query);
+	comma(((teacode *)&_.nop)[*stack++ & ~highbit]);
+//	comma(*stack++ & ~highbit);
 	goto **next++;
 
 comcall: { // ( p -> )
