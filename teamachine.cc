@@ -223,6 +223,7 @@ static struct {
 	minusone, zero, one, two, three, four, five, six, seven, eight, nine, ten,
 	n, s, cs, call, exit, execute, native, natex,
 	run, abort, trap, bye;
+//	void foo() {}
 } __ = {
 	.nop = {"nop"},
 	.query = {"?"},
@@ -365,8 +366,8 @@ struct teamachine {
 	struct entry {
 		dictstar link; byte flags, len, name[0];
 		teacode *here() { return (teacode *)align(name + len, dictalign); }
-		teacode token() { return *((teacode *)this - 1); }
-		dictstar fixlist() { return *((teacode *)this - 2); }
+		teacode token() { return ((teacode *)this)[-1]; }
+		dictstar fixlist() { return ((teacode *)this)[-2]; }
 	} PACKED;
 
 	struct symbol {
@@ -1839,7 +1840,7 @@ int main(int argc, const char *argv[])
 		 *   again ;
 		 */
 
-		if (1) {
+		if (0) {
 			printf(": <name>");
 			vm.codewalk(teashell, show_op);
 			printf(" ;\n");
