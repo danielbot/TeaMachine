@@ -351,10 +351,6 @@ struct teainfo *getinfo(teacode op)
 	return 0;
 }
 
-#include <vector>
-#include "Shardmap/size.h"
-#include "Shardmap/utility.h"
-//#include "Shardmap/recops.cc"
 #include "Shardmap/shardmap.h"
 
 typedef long dictstar; // dict relative pointer

@@ -8,8 +8,6 @@
 
 extern "C" {
 #include "debug.h"
-#include "Shardmap/size.h"
-#include "Shardmap/utility.h"
 #include "Shardmap/options.h"
 }
 
