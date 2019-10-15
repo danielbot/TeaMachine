@@ -6,15 +6,16 @@
 #include <cstddef>
 #include <vector>
 
+#include "Shardmap/shardmap.h"
+
 extern "C" {
-#include "debug.h"
 #include "Shardmap/options.h"
+#include "Shardmap/pmem.h"
+#include "debug.h"
 }
 
 #define trace trace_off
 #define warn trace_on
-
-#include "Shardmap/shardmap.h"
 
 typedef int64_t s64;
 
